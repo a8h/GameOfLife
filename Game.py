@@ -3,6 +3,7 @@ import sys
 import time
 import curses
 from curses import wrapper
+import locale
 
 """
 The universe of the Game of Life is an infinite, two-dimensional orthogonal grid of square cells, each of which is in one of two possible states, alive or dead, (or populated and unpopulated, respectively). 
@@ -20,12 +21,15 @@ At each step in time, the following transitions occur:
 
 """
 
+locale.setlocale(locale.LC_ALL, '')
+code = locale.getpreferredencoding()
+
 # A grid with 0s on the outsides and random 0s or 1s in the inside
 def rand_init_grid(num_rows, num_cols):
     return [[random.randint(0,1) if i > 0 and i < num_cols - 1 else 0 for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 else [0] * num_cols for i in xrange(num_rows)]
     
 def printGridInts(grid):
-    return '\n'.join([' '.join(['X' if i else ' ' for i in list]) for list in grid])
+    return '\n'.join([' '.join([u'\u2584'.encode('UTF-8') if i else ' ' for i in list]) for list in grid])
 
 def withinGrid(row_num, col_num, grid):
     return (row_num > 0 and row_num < len(grid[0]) - 1) and (col_num > 0 and col_num < len(grid) - 1)
@@ -84,15 +88,15 @@ def init_game():
     rows = int(sys.argv[1])
     cols = int(sys.argv[2])
     steps = int(sys.argv[3])
+    refresh_time = float(sys.argv[4])
 
     grid_1 = rand_init_grid(rows,cols)
     grid_2 = [[0 for i in range(cols)] for i in range(rows)]
-    return (grid_1, grid_2, steps)
+    return (grid_1, grid_2, steps, refresh_time)
 
 def run_game(stdscr):
     stdscr.clear()
-    grid_1, grid_2, steps = init_game()
-    refresh_time=0.5
+    grid_1, grid_2, steps, refresh_time = init_game()
 
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     stdscr.addstr(0,0, printGridInts(grid_2), curses.color_pair(1))
