@@ -1,6 +1,7 @@
 import random
 import sys
 import time
+import curses
 from curses import wrapper
 
 """
@@ -19,17 +20,12 @@ At each step in time, the following transitions occur:
 
 """
 
-
 # A grid with 0s on the outsides and random 0s or 1s in the inside
-
 def rand_init_grid(num_rows, num_cols):
     return [[random.randint(0,1) if i > 0 and i < num_cols - 1 else 0 for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 else [0] * num_cols for i in xrange(num_rows)]
     
 def printGridInts(grid):
-    #for list in grid:
-    #    print(' '.join([str(i) for i in list]))
-
-    return '\n'.join([' '.join([str(i) for i in list]) for list in grid])
+    return '\n'.join([' '.join(['X' if i else ' ' for i in list]) for list in grid])
 
 def withinGrid(row_num, col_num, grid):
     return (row_num > 0 and row_num < len(grid[0]) - 1) and (col_num > 0 and col_num < len(grid) - 1)
@@ -93,41 +89,31 @@ def init_game():
     grid_2 = [[0 for i in range(cols)] for i in range(rows)]
     return (grid_1, grid_2, steps)
 
-
 def run_game(stdscr):
     stdscr.clear()
     grid_1, grid_2, steps = init_game()
+    refresh_time=0.5
 
-    stdscr.addstr(0,0, printGridInts(grid_2))
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    stdscr.addstr(0,0, printGridInts(grid_2), curses.color_pair(1))
     stdscr.refresh()
-    time.sleep(1)
-    stdscr.clear()
-    #print("\n")
-    #printGridInts(grid_1)
-    stdscr.addstr(0,0, printGridInts(grid_1))
+    time.sleep(refresh_time)
+    stdscr.addstr(0,0, printGridInts(grid_1), curses.color_pair(1))
     stdscr.refresh()
-    time.sleep(2)
-    stdscr.clear()
-    #print("\n")
+    time.sleep(refresh_time)
 
     for x in xrange(steps):
         if x % 2 == 0:
             state_transition(grid_1, grid_2)
-            #printGridInts(grid_2)
-            stdscr.addstr(0,0, printGridInts(grid_2))
+            stdscr.addstr(0,0, printGridInts(grid_2), curses.color_pair(1))
             stdscr.refresh()
-            time.sleep(2)
-            stdscr.clear()
-            #print("\n")
+            time.sleep(refresh_time)
 
         else:
             state_transition(grid_2, grid_1)
-            #printGridInts(grid_1)
-            stdscr.addstr(0,0, printGridInts(grid_1))
+            stdscr.addstr(0,0, printGridInts(grid_1), curses.color_pair(1))
             stdscr.refresh()
-            time.sleep(2)
-            stdscr.clear()
-            #print("\n")
+            time.sleep(refresh_time)
     stdscr.refresh()
     stdscr.getkey()
 
@@ -136,13 +122,11 @@ def main(stdscr):
 
 wrapper(main)
 
-
 def tests():
     #run_game(5)
 
     input = [[1,1,1],[1,1,1],[1,1,1]]
     print(printGridInts(input))
-
 
     # printGridInts(input)
     # print(withinGrid(1,1,input))
