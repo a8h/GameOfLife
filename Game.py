@@ -27,9 +27,16 @@ code = locale.getpreferredencoding()
 # A grid with 0s on the outsides and random 0s or 1s in the inside
 def rand_init_grid(num_rows, num_cols):
     return [[random.randint(0,1) if i > 0 and i < num_cols - 1 else 0 for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 else [0] * num_cols for i in xrange(num_rows)]
+
+def rand_init_grid_no_border(num_rows, num_cols):
+    return [[random.randint(0,1) for i in range(num_cols)] for i in range(num_rows)]
     
-def printGridInts(grid):
-    return '\n'.join([' '.join([u'\u2584'.encode('UTF-8') if i else ' ' for i in list]) for list in grid])
+def printGrid(grid, symbol_live = u'\u2584', symbol_dead = ' '):
+    return '\n'.join([' '.join([symbol_live.encode('UTF-8') if i else 'symbol_dead' for i in list]) for list in grid])
+
+def printGridInts(grid, symbol_live = u'\u2584', symbol_dead = ' '):
+    #return '\n'.join([' '.join([str(x) for x in list]) for list in grid])
+    return '\n'.join([' '.join(['X' if x else '.' for x in list]) for list in grid])
 
 def withinGrid(row_num, col_num, grid):
     return (row_num > 0 and row_num < len(grid[0]) - 1) and (col_num > 0 and col_num < len(grid) - 1)
@@ -63,23 +70,36 @@ def cell_transition(row_num, col_num, grid):
     else:
         return alive
 
+def wrap(index, mod):
+    #To avoid division by zero error
+    if mod:
+        return index % mod
+    else:
+        return index
+
 # Naive way
 def live_neighbor_count(row_num, col_num, grid):
     count = 0
+    wrap_edges = False
+    if wrap_edges:
+        wrap_vertical, wrap_horizontal = len(grid), len(grid[0])
+    else:
+        wrap_vertical, wrap_horizontal = 0, 0
+
     #Count top row
-    for x in grid[row_num - 1][col_num - 1: col_num + 2]:
+    for x in grid[wrap((row_num - 1), wrap_vertical)][wrap((col_num - 1), wrap_horizontal): wrap((col_num + 2), wrap_horizontal)]:
         if x:
             count += 1
 
     #Count bottom row
-    for x in grid[row_num + 1][col_num - 1: col_num + 2]:
+    for x in grid[wrap((row_num + 1), wrap_vertical)][wrap((col_num - 1), wrap_horizontal): wrap((col_num + 2), wrap_horizontal)]:
         if x:
             count += 1
 
-    if grid[row_num][col_num - 1]:
+    if grid[wrap(row_num, wrap_vertical)][wrap((col_num - 1), wrap_horizontal)]:
         count += 1
 
-    if grid[row_num][col_num + 1]:
+    if grid[wrap(row_num, wrap_vertical)][wrap((col_num + 1), wrap_horizontal)]:
         count += 1
 
     return count
@@ -90,7 +110,7 @@ def init_game():
     steps = int(sys.argv[3])
     refresh_time = float(sys.argv[4])
 
-    grid_1 = rand_init_grid(rows,cols)
+    grid_1 = rand_init_grid_no_border(rows,cols)
     grid_2 = [[0 for i in range(cols)] for i in range(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
@@ -99,6 +119,7 @@ def run_game(stdscr):
     grid_1, grid_2, steps, refresh_time = init_game()
 
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    #TODO: Why does printGrid not work? Symbols issue?
     stdscr.addstr(0,0, printGridInts(grid_2), curses.color_pair(1))
     stdscr.refresh()
     time.sleep(refresh_time)
@@ -127,14 +148,16 @@ def main(stdscr):
 wrapper(main)
 
 def tests():
+    pass
     #run_game(5)
-
-    input = [[1,1,1],[1,1,1],[1,1,1]]
-    print(printGridInts(input))
-
-    # printGridInts(input)
+    #input = [[1,1,1],[1,1,1],[1,1,1]]
+    #print(printGrid(input, '1', '0'))
+    # arr = rand_init_grid_no_border(10,10)
+    # print(printGridInts(arr))
+    # printGrid(input)
     # print(withinGrid(1,1,input))
     # print(withinGrid(0,1,input))
     # print(withinGrid(2,1,input))
     # print(live_neighbor_count(1,1,input))
-    #print(printGridInts(rand_init_grid(6,6)))
+    #print(printGrid(rand_init_grid(6,6)))
+#tests()
