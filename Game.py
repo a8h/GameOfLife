@@ -35,9 +35,6 @@ def rand_init_grid(num_rows, num_cols, with_border = False):
 def printGrid(grid, symbol_live = u'\u2584', symbol_dead = ' '):
     return '\n'.join([' '.join([symbol_live.encode('UTF-8') if i else symbol_dead.encode('UTF-8') for i in list]) for list in grid])
 
-def withinGrid(row_num, col_num, grid):
-    return (row_num > 0 and row_num < len(grid[0]) - 1) and (col_num > 0 and col_num < len(grid) - 1)
-
 #Assuming grids are rectangular
 def state_transition(current_grid, future_grid):
     for row_num in xrange(len(current_grid[:])):
@@ -89,10 +86,16 @@ def live_neighbor_count(row_num, col_num, grid):
     return count
 
 def init_game():
-    rows = int(sys.argv[1])
-    cols = int(sys.argv[2])
-    steps = int(sys.argv[3])
-    refresh_time = float(sys.argv[4])
+    try:
+        rows = int(sys.argv[1])
+        cols = int(sys.argv[2])
+        steps = int(sys.argv[3]) if sys.argv[3] else 1000
+        refresh_time = float(sys.argv[4]) if sys.argv[4] else 0.04
+
+    #Add some default values
+    except IndexError as e:
+        steps = 1000
+        refresh_time = 0.04
 
     grid_1 = rand_init_grid(rows,cols)
     grid_2 = [[0 for i in range(cols)] for i in range(rows)]
@@ -103,10 +106,6 @@ def run_game(stdscr):
     grid_1, grid_2, steps, refresh_time = init_game()
 
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    #TODO: Why does printGrid not work? Symbols issue?
-    stdscr.addstr(0,0, printGrid(grid_2), curses.color_pair(1))
-    stdscr.refresh()
-    time.sleep(refresh_time)
     stdscr.addstr(0,0, printGrid(grid_1), curses.color_pair(1))
     stdscr.refresh()
     time.sleep(refresh_time)
@@ -138,9 +137,6 @@ def tests():
     #print(printGrid(input, '1', '0'))
     # arr = rand_init_grid(10,10)
     # printGrid(input)
-    # print(withinGrid(1,1,input))
-    # print(withinGrid(0,1,input))
-    # print(withinGrid(2,1,input))
     # print(live_neighbor_count(1,1,input))
     #print(printGrid(rand_init_grid(6,6)))
 #tests()
