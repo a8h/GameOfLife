@@ -67,19 +67,31 @@ def live_neighbor_count(row_num, col_num, grid):
     count = 0
     wrap_vertical, wrap_horizontal = len(grid), len(grid[0])
 
-    #Count top row
-    for x in grid[(row_num - 1) % wrap_vertical][(col_num - 1) % wrap_horizontal: (col_num + 2) % wrap_horizontal]:
-        if x:
-            count += 1
+    #Top left
+    if grid[(row_num - 1) % wrap_vertical][(col_num - 1) % wrap_horizontal]:
+        count += 1
+    #Top middle
+    if grid[(row_num - 1) % wrap_vertical][col_num]:
+        count += 1
+    #Top right
+    if grid[(row_num - 1) % wrap_vertical][(col_num + 1) % wrap_horizontal]:
+        count += 1
 
-    #Count bottom row
-    for x in grid[(row_num + 1) % wrap_vertical][(col_num - 1) % wrap_horizontal: (col_num + 2) % wrap_horizontal]:
-        if x:
-            count += 1
+    #Bottom right
+    if grid[(row_num + 1) % wrap_vertical][(col_num - 1) % wrap_horizontal]:
+        count += 1
+    #Bottom middle
+    if grid[(row_num + 1) % wrap_vertical][col_num]:
+        count += 1
+    #Bottom right
+    if grid[(row_num + 1) % wrap_vertical][(col_num + 1) % wrap_horizontal]:
+        count += 1
 
+    #Middle left
     if grid[row_num % wrap_vertical][(col_num - 1) % wrap_horizontal]:
         count += 1
 
+    #Middle right
     if grid[row_num % wrap_vertical][(col_num + 1) % wrap_horizontal]:
         count += 1
 
@@ -89,8 +101,8 @@ def init_game():
     try:
         rows = int(sys.argv[1])
         cols = int(sys.argv[2])
-        steps = int(sys.argv[3]) if sys.argv[3] else 1000
-        refresh_time = float(sys.argv[4]) if sys.argv[4] else 0.04
+        steps = int(sys.argv[3])
+        refresh_time = float(sys.argv[4])
 
     #Add some default values
     except IndexError as e:
