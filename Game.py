@@ -97,7 +97,7 @@ def live_neighbor_count(row_num, col_num, grid):
 
     return count
 
-def init_game():
+def init_game(stdscr):
     try:
         rows = int(sys.argv[1])
         cols = int(sys.argv[2])
@@ -106,7 +106,9 @@ def init_game():
 
     #Add some default values
     except IndexError as e:
-        steps = 1000
+        rows, cols = stdscr.getmaxyx()
+        cols /= 2
+        steps = sys.maxint
         refresh_time = 0.04
 
     grid_1 = rand_init_grid(rows,cols)
@@ -115,15 +117,16 @@ def init_game():
 
 def run_game(stdscr):
     stdscr.clear()
-    grid_1, grid_2, steps, refresh_time = init_game()
+    grid_1, grid_2, steps, refresh_time = init_game(stdscr)
 
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     stdscr.addstr(0,0, printGrid(grid_1), curses.color_pair(1))
     stdscr.refresh()
     time.sleep(refresh_time)
 
-    for x in xrange(steps):
-        if x % 2 == 0:
+    for step in xrange(steps):
+        #TODO: Try to simplify with a swap. But a tuple swap makes the program a lot slower
+        if step % 2 == 0:
             state_transition(grid_1, grid_2)
             stdscr.addstr(0,0, printGrid(grid_2), curses.color_pair(1))
             stdscr.refresh()
