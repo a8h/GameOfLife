@@ -117,6 +117,7 @@ def run_game(stdscr):
     stdscr.clear()
     grid_1, grid_2, steps, refresh_time = init_game(stdscr)
 
+    curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     stdscr.addstr(0,0, printGrid(grid_1), curses.color_pair(1))
     stdscr.refresh()
