@@ -24,16 +24,21 @@ At each step in time, the following transitions occur:
 
 locale.setlocale(locale.LC_ALL, '')
 code = locale.getpreferredencoding()
+try:
+    xrange
+except NameError:
+    xrange = range
 
 def rand_init_grid(num_rows, num_cols, with_border = False):
     # A grid with 0s on the outsides and random 0s or 1s in the inside
+    num_rows, num_cols = int(num_rows), int(num_cols)
     if with_border:
         return [[random.randint(0,1) if i > 0 and i < num_cols - 1 else 0 for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 else [0] * num_cols for i in xrange(num_rows)]
     else:
-        return [[random.randint(0,1) for i in range(num_cols)] for i in range(num_rows)]
+        return [[random.randint(0,1) for i in xrange(num_cols)] for i in xrange(num_rows)]
     
 def printGrid(grid, symbol_live = u'\u2584', symbol_dead = ' '):
-    return '\n'.join([' '.join([symbol_live.encode('UTF-8') if i else symbol_dead.encode('UTF-8') for i in list]) for list in grid])
+    return b'\n'.join([b' '.join([symbol_live.encode('UTF-8') if i else symbol_dead.encode('UTF-8') for i in list]) for list in grid])
 
 #Assuming grids are rectangular
 def state_transition(current_grid, future_grid):
@@ -108,11 +113,12 @@ def init_game(stdscr):
     except IndexError as e:
         rows, cols = stdscr.getmaxyx()
         cols /= 2
-        steps = sys.maxint
+        steps = sys.maxsize
         refresh_time = 0.04
 
+    rows, cols = int(rows), int(cols)
     grid_1 = rand_init_grid(rows,cols)
-    grid_2 = [[0 for i in range(cols)] for i in range(rows)]
+    grid_2 = [[0 for i in xrange(cols)] for i in xrange(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
 def run_game(stdscr):
