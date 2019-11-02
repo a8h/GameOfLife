@@ -13,11 +13,6 @@ import locale
 locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
 
-# For quick Python3 compatibility
-try:
-    xrange
-except NameError:
-    xrange = range
 
 def rand_init_grid(num_rows, num_cols, with_border=False):
     """ Initialize a grid randomly with 0s and 1s.
@@ -212,15 +207,11 @@ def run_game(stdscr):
     stdscr.refresh()
     stdscr.getkey()
 
-wrapper(run_game)
 
-def tests():
-    pass
-    #run_game(5)
-    #input = [[1,1,1],[1,1,1],[1,1,1]]
-    #print(print_grid(input, '1', '0'))
-    # arr = rand_init_grid(10,10)
-    # print_grid(input)
-    # print(live_neighbor_count(1,1,input))
-    #print(print_grid(rand_init_grid(6,6)))
-#tests()
+if __name__ == '__main__':
+    # For quick Python3 compatibility
+    try:
+        xrange
+    except NameError:
+        xrange = range
+    wrapper(run_game)
