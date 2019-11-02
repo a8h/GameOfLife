@@ -22,12 +22,12 @@ def rand_init_grid(num_rows, num_cols, with_border=False):
     # A grid with 0s on the outsides and random 0s or 1s in the inside
     num_rows, num_cols = int(num_rows), int(num_cols)
     if with_border:
-        return [[random.randint(0,1) if i > 0 and i < num_cols - 1 else 0 \
+        return [[random.randint(0, 1) if i > 0 and i < num_cols - 1 else 0 \
             for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 \
             else [0] * num_cols for i in xrange(num_rows)]
     else:
-        return [[random.randint(0,1) for i in xrange(num_cols)] for i in xrange(num_rows)]
-    
+        return [[random.randint(0, 1) for i in xrange(num_cols)] for i in xrange(num_rows)]
+
 def printGrid(grid, symbol_live=u'\u2584', symbol_dead=' '):
     return b'\n'.join([b' '.join([symbol_live.encode('UTF-8') if i \
             else symbol_dead.encode('UTF-8') for i in list]) for list in grid])
@@ -109,7 +109,7 @@ def init_game(stdscr):
         refresh_time = 0.04
 
     rows, cols = int(rows), int(cols)
-    grid_1 = rand_init_grid(rows,cols)
+    grid_1 = rand_init_grid(rows, cols)
     grid_2 = [[0 for i in xrange(cols)] for i in xrange(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
@@ -119,7 +119,7 @@ def run_game(stdscr):
 
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    stdscr.addstr(0,0, printGrid(grid_1), curses.color_pair(1))
+    stdscr.addstr(0, 0, printGrid(grid_1), curses.color_pair(1))
     stdscr.refresh()
     time.sleep(refresh_time)
 
@@ -127,13 +127,13 @@ def run_game(stdscr):
         #TODO: Try to simplify with a swap. But a tuple swap makes the program a lot slower
         if step % 2 == 0:
             state_transition(grid_1, grid_2)
-            stdscr.addstr(0,0, printGrid(grid_2), curses.color_pair(1))
+            stdscr.addstr(0, 0, printGrid(grid_2), curses.color_pair(1))
             stdscr.refresh()
             time.sleep(refresh_time)
 
         else:
             state_transition(grid_2, grid_1)
-            stdscr.addstr(0,0, printGrid(grid_1), curses.color_pair(1))
+            stdscr.addstr(0, 0, printGrid(grid_1), curses.color_pair(1))
             stdscr.refresh()
             time.sleep(refresh_time)
     stdscr.refresh()
