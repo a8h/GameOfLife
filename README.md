@@ -1,6 +1,9 @@
 # Conway's Game of Life
 Visualizing Conway's Game of Life on the terminal.
 
+## Requirements
+Python 2.7 or Python 3.5
+
 ## Usage
 Run Game of Life with default settings (grid size equals size of the terminal window):
 
