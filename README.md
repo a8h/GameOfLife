@@ -1,6 +1,10 @@
 # Conway's Game of Life
 Visualizing Conway's Game of Life on the terminal.
 
+## Example
+A screenshot of the visualization:
+![Game of Life](example.png)
+
 ## Requirements
 Python 2.7 or Python 3.5
 
@@ -9,7 +13,7 @@ Run Game of Life with default settings (grid size equals size of the terminal wi
 
 `$ python game.py`
 
-Create a 66 x 118 grid, and run for 1000 ticks with pause of 0.04 seconds between each tick:
+Create a 24 x 40 block grid on your terminal, and run for 1000 ticks with a pause of 0.04 seconds between each tick:
 
 `$ python game.py 24 40 1000 0.04`
 
