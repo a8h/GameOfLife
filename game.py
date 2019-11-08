@@ -183,30 +183,26 @@ def run_game(stdscr):
         None
 
     """
-    stdscr.clear()
-    grid_1, grid_2, steps, refresh_time = init_game(stdscr)
+    try:
+        stdscr.clear()
+        grid_1, grid_2, steps, refresh_time = init_game(stdscr)
+        curses.curs_set(0)
+        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
+        stdscr.refresh()
+        time.sleep(refresh_time)
 
-    curses.curs_set(0)
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
-    stdscr.refresh()
-    time.sleep(refresh_time)
-
-    for step in xrange(steps):
-        if step % 2 == 0:
-            state_transition(grid_1, grid_2)
-            stdscr.addstr(0, 0, print_grid(grid_2), curses.color_pair(1))
+        for step in xrange(steps):
+            if step % 2:
+                state_transition(grid_2, grid_1)
+                stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
+            else:
+                state_transition(grid_1, grid_2)
+                stdscr.addstr(0, 0, print_grid(grid_2), curses.color_pair(1))
             stdscr.refresh()
             time.sleep(refresh_time)
-
-        else:
-            state_transition(grid_2, grid_1)
-            stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
-            stdscr.refresh()
-            time.sleep(refresh_time)
-    stdscr.refresh()
-    stdscr.getkey()
-
+    except KeyboardInterrupt:
+        pass
 
 if __name__ == '__main__':
     # For quick Python3 compatibility
