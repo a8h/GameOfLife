@@ -8,6 +8,7 @@ A screenshot of the visualization:
 
 ## Requirements
 Python 2.7 or Python 3.5
+Unix-based OS
 
 ## Usage
 Run Game of Life with default settings (grid size equals size of the terminal window):
