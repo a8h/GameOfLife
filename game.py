@@ -31,8 +31,7 @@ def rand_init_grid(num_rows, num_cols, with_border=False):
         return [[random.randint(0, 1) if i > 0 and i < num_cols - 1 else 0 \
             for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 \
             else [0] * num_cols for i in xrange(num_rows)]
-    else:
-        return [[random.randint(0, 1) for i in xrange(num_cols)] for i in xrange(num_rows)]
+    return [[random.randint(0, 1) for i in xrange(num_cols)] for i in xrange(num_rows)]
 
 def print_grid(grid, symbol_live=u'\u2584', symbol_dead=' '):
     """ Create a string byte representation of the grid.
@@ -96,8 +95,7 @@ def cell_transition(row_num, col_num, grid):
     # Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     elif not living_status and live_count == 3:
         return 1
-    else:
-        return living_status
+    return living_status
 
 # Naive way
 def live_neighbor_count(row_num, col_num, grid):
@@ -138,7 +136,6 @@ def live_neighbor_count(row_num, col_num, grid):
     # Middle left
     if grid[row_num % wrap_vertical][(col_num - 1) % wrap_horizontal]:
         count += 1
-
     # Middle right
     if grid[row_num % wrap_vertical][(col_num + 1) % wrap_horizontal]:
         count += 1
@@ -170,7 +167,7 @@ def init_game(stdscr):
 
     rows, cols = int(rows), int(cols)
     grid_1 = rand_init_grid(rows, cols)
-    grid_2 = [[0 for i in xrange(cols)] for i in xrange(rows)]
+    grid_2 = [[0 for _ in xrange(cols)] for _ in xrange(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
 def run_game(stdscr):
