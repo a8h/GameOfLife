@@ -8,18 +8,18 @@ A screenshot of the visualization:
 
 ## Requirements
 * Python 2.7 or Python 3.5
-* Unix-based OS
+* Unix-based OS (for ncurses support)
 
 ## Usage
 Run the Game of Life visualization with default settings (grid size equals size of the terminal window):
 
 `$ python game.py`
 
-Exit the Game of Life visualization by pressing `Ctrl-C`.
-
 Create a 24 x 40 block grid on your terminal, and run for 1000 ticks with a pause of 0.04 seconds between each tick:
 
 `$ python game.py 24 40 1000 0.04`
+
+Exit the Game of Life visualization by pressing `Ctrl-C`.
 
 ## TODO
 1. Restart if caught in a repetitive cycle
