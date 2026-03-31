@@ -21,6 +21,11 @@ Create a 24 x 40 block grid on your terminal, and run for 1000 ticks with a paus
 
 Exit the Game of Life visualization by pressing `Ctrl-C`.
 
+## Tests
+Run the automated test suite with:
+
+`$ python3 -m unittest discover -s tests -p 'test*.py'`
+
 ## TODO
 1. Restart if caught in a repetitive cycle
 2. Optimize performance
