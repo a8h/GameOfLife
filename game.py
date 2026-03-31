@@ -19,7 +19,9 @@ locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
 
 
-def rand_init_grid(num_rows, num_cols, with_border=False):
+def rand_init_grid(
+    num_rows: int, num_cols: int, with_border: bool = False
+) -> list[list[int]]:
     """ Initialize a grid randomly with 0s and 1s.
 
     Args:
@@ -38,7 +40,9 @@ def rand_init_grid(num_rows, num_cols, with_border=False):
             else [0] * num_cols for i in xrange(num_rows)]
     return [[random.randint(0, 1) for i in xrange(num_cols)] for i in xrange(num_rows)]
 
-def print_grid(grid, symbol_live=u'\u2584', symbol_dead=' '):
+def print_grid(
+    grid: list[list[int]], symbol_live: str = u'\u2584', symbol_dead: str = ' '
+) -> bytes:
     """ Create a string byte representation of the grid.
 
     Args:
@@ -54,7 +58,11 @@ def print_grid(grid, symbol_live=u'\u2584', symbol_dead=' '):
             else symbol_dead.encode('UTF-8') for i in arr]) for arr in grid])
 
 # Assuming grids are rectangular
-def state_transition(current_grid, future_grid, with_border=False):
+def state_transition(
+    current_grid: list[list[int]],
+    future_grid: list[list[int]],
+    with_border: bool = False,
+) -> None:
     """ Transition between grids.
 
     Args:
@@ -84,7 +92,7 @@ def state_transition(current_grid, future_grid, with_border=False):
         for col_num in xrange(col_start, col_end):
             future_grid[row_num][col_num] = cell_transition(row_num, col_num, current_grid)
 
-def cell_transition(row_num, col_num, grid):
+def cell_transition(row_num: int, col_num: int, grid: list[list[int]]) -> int:
     """ Uses Conway's rules to determine whether a cell should live (1) or die (0).
 
     Args:
@@ -117,7 +125,7 @@ def cell_transition(row_num, col_num, grid):
     return living_status
 
 # Naive way
-def live_neighbor_count(row_num, col_num, grid):
+def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> int:
     """ Compute how many of the eight neighboring cells are alive.
 
     Args:
@@ -161,7 +169,7 @@ def live_neighbor_count(row_num, col_num, grid):
 
     return count
 
-def init_game(stdscr):
+def init_game(stdscr: curses.window) -> tuple[list[list[int]], list[list[int]], int, float]:
     """ Initialize the game and values for ncurses.
 
     Args:
@@ -190,7 +198,7 @@ def init_game(stdscr):
     grid_2 = [[0 for _ in xrange(cols)] for _ in xrange(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
-def run_game(stdscr):
+def run_game(stdscr: curses.window) -> None:
     """ Runs the main game loop.
 
     Args:
