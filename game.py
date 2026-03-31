@@ -10,6 +10,11 @@ import curses
 from curses import wrapper
 import locale
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
 
@@ -49,20 +54,34 @@ def print_grid(grid, symbol_live=u'\u2584', symbol_dead=' '):
             else symbol_dead.encode('UTF-8') for i in arr]) for arr in grid])
 
 # Assuming grids are rectangular
-def state_transition(current_grid, future_grid):
+def state_transition(current_grid, future_grid, with_border=False):
     """ Transition between grids.
 
     Args:
         current_grid (list): The 2-d grid representation of the current state of the simulation.
         future_grid (list): The 2-d grid that will store the representation of the next state \
                 of the simulation.
+        with_border (bool): Whether to preserve a dead border around the grid.
 
     Returns:
         None
 
     """
-    for row_num in xrange(len(current_grid[:])):
-        for col_num in xrange(len(current_grid[0][:])):
+    row_start = 1 if with_border else 0
+    row_end = len(current_grid) - 1 if with_border else len(current_grid)
+    col_start = 1 if with_border else 0
+    col_end = len(current_grid[0]) - 1 if with_border else len(current_grid[0])
+
+    if with_border:
+        for row_num in xrange(len(current_grid)):
+            future_grid[row_num][0] = 0
+            future_grid[row_num][-1] = 0
+        for col_num in xrange(len(current_grid[0])):
+            future_grid[0][col_num] = 0
+            future_grid[-1][col_num] = 0
+
+    for row_num in xrange(row_start, row_end):
+        for col_num in xrange(col_start, col_end):
             future_grid[row_num][col_num] = cell_transition(row_num, col_num, current_grid)
 
 def cell_transition(row_num, col_num, grid):
@@ -152,18 +171,19 @@ def init_game(stdscr):
         tuple: A tuple containing the initialized values for the game.
 
     """
-    try:
-        rows = int(sys.argv[1])
-        cols = int(sys.argv[2])
-        steps = int(sys.argv[3])
-        refresh_time = float(sys.argv[4])
+    rows, cols = stdscr.getmaxyx()
+    cols /= 2
+    steps = sys.maxsize
+    refresh_time = 0.04
 
-    # Default values
-    except IndexError:
-        rows, cols = stdscr.getmaxyx()
-        cols /= 2
-        steps = sys.maxsize
-        refresh_time = 0.04
+    if len(sys.argv) > 1:
+        rows = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        cols = int(sys.argv[2])
+    if len(sys.argv) > 3:
+        steps = int(sys.argv[3])
+    if len(sys.argv) > 4:
+        refresh_time = float(sys.argv[4])
 
     rows, cols = int(rows), int(cols)
     grid_1 = rand_init_grid(rows, cols)
@@ -202,9 +222,4 @@ def run_game(stdscr):
         pass
 
 if __name__ == '__main__':
-    # For quick Python3 compatibility
-    try:
-        xrange
-    except NameError:
-        xrange = range
     wrapper(run_game)
