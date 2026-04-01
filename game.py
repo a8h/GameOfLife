@@ -5,6 +5,7 @@ https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules
 
 import random
 import sys
+import time
 import curses
 from curses import wrapper
 import locale
@@ -34,6 +35,7 @@ COLOR_NAME_TO_CURSES = {
     'yellow': curses.COLOR_YELLOW,
 }
 MAX_EXTENDED_COLOR = 255
+RESTART_DELAY_SECONDS = 1
 ColorValue = Union[int, str]
 
 
@@ -78,6 +80,37 @@ def print_grid(
         symbol_live.encode('UTF-8') if cell else symbol_dead.encode('UTF-8')
         for cell in row
     ]) for row in grid])
+
+
+def make_grids(num_rows: int, num_cols: int) -> tuple[list[list[int]], list[list[int]]]:
+    """Create the current grid and an empty future grid."""
+    current_grid = rand_init_grid(num_rows, num_cols)
+    future_grid = [[0 for _ in range_compat(num_cols)] for _ in range_compat(num_rows)]
+    return current_grid, future_grid
+
+
+def grid_signature(grid: list[list[int]]) -> tuple[tuple[int, ...], ...]:
+    """Create a hashable signature for a grid state."""
+    return tuple(tuple(row) for row in grid)
+
+
+def is_repeated_state(
+    seen_states: set[tuple[tuple[int, ...], ...]],
+    grid: list[list[int]],
+) -> bool:
+    """Report whether a grid state has already been seen."""
+    return grid_signature(grid) in seen_states
+
+
+def record_state(seen_states: set[tuple[tuple[int, ...], ...]], grid: list[list[int]]) -> None:
+    """Record a grid state in the seen-state set."""
+    seen_states.add(grid_signature(grid))
+
+
+def restart_grids(num_rows: int, num_cols: int) -> tuple[list[list[int]], list[list[int]]]:
+    """Pause briefly before restarting with a fresh random grid."""
+    time.sleep(RESTART_DELAY_SECONDS)
+    return make_grids(num_rows, num_cols)
 
 # Assuming grids are rectangular
 def state_transition(
@@ -224,8 +257,7 @@ def init_game(
         background_color = parse_color(sys.argv[6])
 
     rows, cols = int(rows), int(cols)
-    grid_1 = rand_init_grid(rows, cols)
-    grid_2 = [[0 for _ in range_compat(cols)] for _ in range_compat(rows)]
+    grid_1, grid_2 = make_grids(rows, cols)
     return (
         grid_1,
         grid_2,
@@ -305,18 +337,28 @@ def run_game(stdscr: curses.window) -> None:
         curses.curs_set(0)
         color_pair = configure_colors(foreground_color, background_color)
         configure_input(stdscr, refresh_time)
-        stdscr.addstr(0, 0, print_grid(grid_1), color_pair)
+        current_grid, future_grid = grid_1, grid_2
+        seen_states = set()
+        record_state(seen_states, current_grid)
+
+        stdscr.addstr(0, 0, print_grid(current_grid), color_pair)
         stdscr.refresh()
 
-        for step in range_compat(steps):
+        for _ in range_compat(steps):
             if should_exit(stdscr.getch()):
                 break
-            if step % 2:
-                state_transition(grid_2, grid_1)
-                stdscr.addstr(0, 0, print_grid(grid_1), color_pair)
+            state_transition(current_grid, future_grid)
+            if is_repeated_state(seen_states, future_grid):
+                current_grid, future_grid = restart_grids(
+                    len(current_grid),
+                    len(current_grid[0]),
+                )
+                seen_states = set()
+                record_state(seen_states, current_grid)
             else:
-                state_transition(grid_1, grid_2)
-                stdscr.addstr(0, 0, print_grid(grid_2), color_pair)
+                record_state(seen_states, future_grid)
+                current_grid, future_grid = future_grid, current_grid
+            stdscr.addstr(0, 0, print_grid(current_grid), color_pair)
             stdscr.refresh()
     except KeyboardInterrupt:
         pass

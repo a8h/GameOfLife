@@ -34,6 +34,57 @@ class GameTests(unittest.TestCase):
         self.assertEqual(2, len(grid))
         self.assertEqual(3, len(grid[0]))
 
+    def test_make_grids_returns_current_and_empty_future_grid(self):
+        current_grid, future_grid = game.make_grids(3, 4)
+
+        self.assertEqual(3, len(current_grid))
+        self.assertTrue(all(len(row) == 4 for row in current_grid))
+        self.assertEqual([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], future_grid)
+
+    def test_grid_signature_returns_hashable_state(self):
+        signature = game.grid_signature([[1, 0], [0, 1]])
+
+        self.assertEqual(((1, 0), (0, 1)), signature)
+
+    def test_is_repeated_state_reports_previous_states(self):
+        first_state = [
+            [0, 1, 0],
+            [0, 1, 0],
+            [0, 1, 0],
+        ]
+        second_state = [
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 0, 0],
+        ]
+        seen_states = {game.grid_signature(first_state)}
+
+        self.assertTrue(game.is_repeated_state(seen_states, first_state))
+        self.assertFalse(game.is_repeated_state(seen_states, second_state))
+
+    def test_record_state_adds_signature_to_seen_states(self):
+        state = [
+            [0, 1, 0],
+            [0, 1, 0],
+            [0, 1, 0],
+        ]
+        seen_states = set()
+
+        game.record_state(seen_states, state)
+
+        self.assertEqual({game.grid_signature(state)}, seen_states)
+
+    def test_restart_grids_pauses_before_creating_new_grids(self):
+        new_grids = ([[1, 0]], [[0, 0]])
+
+        with mock.patch.object(game.time, 'sleep') as sleep:
+            with mock.patch.object(game, 'make_grids', return_value=new_grids) as make_grids:
+                restarted_grids = game.restart_grids(1, 2)
+
+        sleep.assert_called_once_with(game.RESTART_DELAY_SECONDS)
+        make_grids.assert_called_once_with(1, 2)
+        self.assertEqual(new_grids, restarted_grids)
+
     def test_parse_color_normalizes_case(self):
         self.assertEqual('green', game.parse_color('Green'))
 

@@ -29,6 +29,8 @@ Create a 24 x 40 block grid with 256-color palette values:
 
 Supported colors: named colors `black`, `blue`, `cyan`, `green`, `magenta`, `red`, `white`, `yellow`, or palette indices `0`-`255` on terminals with 256-color support
 
+If the simulation falls into a repeating cycle, it pauses for a second and then restarts with a fresh random grid.
+
 Exit the Game of Life visualization by pressing `Ctrl-C`, `q`, `Q`, or `Esc`.
 
 ## Tests
@@ -37,5 +39,4 @@ Run the automated test suite with:
 `$ python3 -m unittest discover -s tests -p 'test*.py'`
 
 ## TODO
-1. Restart if caught in a repetitive cycle
-2. Optimize performance
+1. Optimize performance
