@@ -9,6 +9,7 @@ import time
 import curses
 from curses import wrapper
 import locale
+from typing import Union
 
 try:
     xrange
@@ -33,6 +34,8 @@ COLOR_NAME_TO_CURSES = {
     'white': curses.COLOR_WHITE,
     'yellow': curses.COLOR_YELLOW,
 }
+MAX_EXTENDED_COLOR = 255
+ColorValue = Union[int, str]
 
 
 def rand_init_grid(
@@ -187,7 +190,7 @@ def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> in
 
 def init_game(
     stdscr: curses.window,
-) -> tuple[list[list[int]], list[list[int]], int, float, str, str]:
+) -> tuple[list[list[int]], list[list[int]], int, float, ColorValue, ColorValue]:
     """ Initialize the game and values for ncurses.
 
     Args:
@@ -230,21 +233,38 @@ def init_game(
     )
 
 
-def parse_color(color_name: str) -> str:
-    """Normalize and validate a terminal color name."""
+def parse_color(color_name: str) -> ColorValue:
+    """Normalize and validate a terminal color name or palette index."""
     normalized_color = color_name.lower()
+    if normalized_color.isdigit():
+        color_number = int(normalized_color)
+        if color_number > MAX_EXTENDED_COLOR:
+            raise ValueError('Color index out of range: {}'.format(color_name))
+        return color_number
     if normalized_color not in COLOR_NAME_TO_CURSES:
         raise ValueError('Unsupported color: {}'.format(color_name))
     return normalized_color
 
 
-def configure_colors(foreground_color: str, background_color: str) -> int:
+def resolve_curses_color(color: ColorValue) -> int:
+    """Resolve a named or numeric color value to a curses color number."""
+    if isinstance(color, int):
+        supported_color_count = getattr(curses, 'COLORS', len(COLOR_NAME_TO_CURSES))
+        if color >= supported_color_count:
+            raise ValueError('Terminal does not support color {}'.format(color))
+        return color
+    return COLOR_NAME_TO_CURSES[color]
+
+
+def configure_colors(foreground_color: ColorValue, background_color: ColorValue) -> int:
     """Initialize curses colors and return the pair used for rendering."""
     curses.start_color()
+    foreground = resolve_curses_color(foreground_color)
+    background = resolve_curses_color(background_color)
     curses.init_pair(
         1,
-        COLOR_NAME_TO_CURSES[foreground_color],
-        COLOR_NAME_TO_CURSES[background_color],
+        foreground,
+        background,
     )
     return curses.color_pair(1)
 

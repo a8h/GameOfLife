@@ -37,9 +37,16 @@ class GameTests(unittest.TestCase):
     def test_parse_color_normalizes_case(self):
         self.assertEqual('green', game.parse_color('Green'))
 
+    def test_parse_color_accepts_palette_index(self):
+        self.assertEqual(196, game.parse_color('196'))
+
     def test_parse_color_rejects_unknown_color(self):
         with self.assertRaises(ValueError):
             game.parse_color('orange')
+
+    def test_parse_color_rejects_out_of_range_palette_index(self):
+        with self.assertRaises(ValueError):
+            game.parse_color('256')
 
     def test_print_grid_returns_expected_bytes(self):
         rendered = game.print_grid([[1, 0], [0, 1]])
@@ -74,6 +81,22 @@ class GameTests(unittest.TestCase):
             game.COLOR_NAME_TO_CURSES['black'],
         )
         self.assertEqual(123, color_pair)
+
+    def test_configure_colors_accepts_palette_indices(self):
+        with mock.patch.object(game.curses, 'COLORS', 256, create=True):
+            with mock.patch.object(game.curses, 'start_color'):
+                with mock.patch.object(game.curses, 'init_pair') as init_pair:
+                    with mock.patch.object(game.curses, 'color_pair', return_value=456):
+                        color_pair = game.configure_colors(196, 234)
+
+        init_pair.assert_called_once_with(1, 196, 234)
+        self.assertEqual(456, color_pair)
+
+    def test_configure_colors_rejects_unsupported_palette_index(self):
+        with mock.patch.object(game.curses, 'COLORS', 8, create=True):
+            with mock.patch.object(game.curses, 'start_color'):
+                with self.assertRaises(ValueError):
+                    game.configure_colors(196, 'black')
 
     def test_live_neighbor_count_counts_wrapped_neighbors(self):
         grid = [
@@ -164,6 +187,30 @@ class GameTests(unittest.TestCase):
         self.assertEqual(0.1, refresh_time)
         self.assertEqual('red', foreground_color)
         self.assertEqual('black', background_color)
+
+    def test_init_game_accepts_palette_index_arguments(self):
+        with mock.patch.object(
+            sys,
+            'argv',
+            ['game.py', '10', '20', '30', '0.1', '196', '234'],
+        ):
+            (
+                grid_1,
+                grid_2,
+                steps,
+                refresh_time,
+                foreground_color,
+                background_color,
+            ) = game.init_game(DummyScreen())
+
+        self.assertEqual(10, len(grid_1))
+        self.assertEqual(20, len(grid_1[0]))
+        self.assertEqual(10, len(grid_2))
+        self.assertEqual(20, len(grid_2[0]))
+        self.assertEqual(30, steps)
+        self.assertEqual(0.1, refresh_time)
+        self.assertEqual(196, foreground_color)
+        self.assertEqual(234, background_color)
 
     def test_state_transition_preserves_dead_border(self):
         current = [

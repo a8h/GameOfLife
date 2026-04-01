@@ -23,7 +23,11 @@ Create a 24 x 40 block grid with red live cells on a black background:
 
 `$ python game.py 24 40 1000 0.04 red black`
 
-Supported colors: `black`, `blue`, `cyan`, `green`, `magenta`, `red`, `white`, `yellow`
+Create a 24 x 40 block grid with 256-color palette values:
+
+`$ python game.py 24 40 1000 0.04 196 234`
+
+Supported colors: named colors `black`, `blue`, `cyan`, `green`, `magenta`, `red`, `white`, `yellow`, or palette indices `0`-`255` on terminals with 256-color support
 
 Exit the Game of Life visualization by pressing `Ctrl-C`, `q`, `Q`, or `Esc`.
 
@@ -35,4 +39,3 @@ Run the automated test suite with:
 ## TODO
 1. Restart if caught in a repetitive cycle
 2. Optimize performance
-3. Use 255 colors
