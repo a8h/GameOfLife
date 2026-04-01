@@ -19,7 +19,7 @@ Create a 24 x 40 block grid on your terminal, and run for 1000 ticks with a paus
 
 `$ python game.py 24 40 1000 0.04`
 
-Exit the Game of Life visualization by pressing `Ctrl-C`.
+Exit the Game of Life visualization by pressing `Ctrl-C`, `q`, `Q`, or `Esc`.
 
 ## Tests
 Run the automated test suite with:

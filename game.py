@@ -18,6 +18,9 @@ except NameError:
 locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
 
+ESC_KEY = 27
+EXIT_KEYS = (ord('q'), ord('Q'), ESC_KEY)
+
 
 def rand_init_grid(
     num_rows: int, num_cols: int, with_border: bool = False
@@ -198,6 +201,11 @@ def init_game(stdscr: curses.window) -> tuple[list[list[int]], list[list[int]], 
     grid_2 = [[0 for _ in xrange(cols)] for _ in xrange(rows)]
     return (grid_1, grid_2, steps, refresh_time)
 
+
+def should_exit(key_pressed: int) -> bool:
+    """Return whether the pressed key should exit the game."""
+    return key_pressed in EXIT_KEYS
+
 def run_game(stdscr: curses.window) -> None:
     """ Runs the main game loop.
 
@@ -213,11 +221,13 @@ def run_game(stdscr: curses.window) -> None:
         grid_1, grid_2, steps, refresh_time = init_game(stdscr)
         curses.curs_set(0)
         curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        stdscr.timeout(int(refresh_time * 1000))
         stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
         stdscr.refresh()
-        time.sleep(refresh_time)
 
         for step in xrange(steps):
+            if should_exit(stdscr.getch()):
+                break
             if step % 2:
                 state_transition(grid_2, grid_1)
                 stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
@@ -225,7 +235,6 @@ def run_game(stdscr: curses.window) -> None:
                 state_transition(grid_1, grid_2)
                 stdscr.addstr(0, 0, print_grid(grid_2), curses.color_pair(1))
             stdscr.refresh()
-            time.sleep(refresh_time)
     except KeyboardInterrupt:
         pass
 

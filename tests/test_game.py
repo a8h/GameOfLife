@@ -36,6 +36,12 @@ class GameTests(unittest.TestCase):
 
         self.assertEqual(b'\xe2\x96\x84  \n  \xe2\x96\x84', rendered)
 
+    def test_should_exit_recognizes_supported_exit_keys(self):
+        self.assertTrue(game.should_exit(ord('q')))
+        self.assertTrue(game.should_exit(ord('Q')))
+        self.assertTrue(game.should_exit(27))
+        self.assertFalse(game.should_exit(-1))
+
     def test_live_neighbor_count_counts_wrapped_neighbors(self):
         grid = [
             [1, 0, 0],
