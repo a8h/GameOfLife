@@ -7,9 +7,13 @@ import random
 import sys
 import time
 import curses
+import os
+import subprocess
+import traceback
+from collections import deque
 from curses import wrapper
 import locale
-from typing import Union
+from typing import Deque, Optional, Union
 
 try:
     range_compat = xrange
@@ -36,7 +40,11 @@ COLOR_NAME_TO_CURSES = {
 }
 MAX_EXTENDED_COLOR = 255
 RESTART_DELAY_SECONDS = 1
+MEMORY_LOG_INTERVAL_SECONDS = 1
+MAX_TRACKED_STATES = 5
+DEBUG_LOG_PATH = os.path.join(os.path.dirname(__file__), 'game_debug.log')
 ColorValue = Union[int, str]
+StateSignature = tuple[tuple[int, ...], ...]
 
 
 def rand_init_grid(
@@ -89,28 +97,89 @@ def make_grids(num_rows: int, num_cols: int) -> tuple[list[list[int]], list[list
     return current_grid, future_grid
 
 
-def grid_signature(grid: list[list[int]]) -> tuple[tuple[int, ...], ...]:
+def grid_signature(grid: list[list[int]]) -> StateSignature:
     """Create a hashable signature for a grid state."""
     return tuple(tuple(row) for row in grid)
 
 
 def is_repeated_state(
-    seen_states: set[tuple[tuple[int, ...], ...]],
+    recent_states: Deque[StateSignature],
     grid: list[list[int]],
 ) -> bool:
     """Report whether a grid state has already been seen."""
-    return grid_signature(grid) in seen_states
+    return grid_signature(grid) in recent_states
 
 
-def record_state(seen_states: set[tuple[tuple[int, ...], ...]], grid: list[list[int]]) -> None:
-    """Record a grid state in the seen-state set."""
-    seen_states.add(grid_signature(grid))
+def record_state(recent_states: Deque[StateSignature], grid: list[list[int]]) -> None:
+    """Record a grid state in the bounded recent-state history."""
+    recent_states.append(grid_signature(grid))
 
 
 def restart_grids(num_rows: int, num_cols: int) -> tuple[list[list[int]], list[list[int]]]:
     """Pause briefly before restarting with a fresh random grid."""
     time.sleep(RESTART_DELAY_SECONDS)
     return make_grids(num_rows, num_cols)
+
+
+def append_debug_log(message: str, log_path: str = DEBUG_LOG_PATH) -> None:
+    """Append a debug message to the log file."""
+    with open(log_path, 'a') as debug_log:
+        debug_log.write(message + '\n')
+
+
+def current_timestamp() -> str:
+    """Return the current wall-clock timestamp for debug logging."""
+    return time.strftime('%Y-%m-%dT%H:%M:%S')
+
+
+def get_memory_usage_kb() -> int:
+    """Return the current process resident set size in kilobytes."""
+    output = subprocess.check_output(
+        ['ps', '-o', 'rss=', '-p', str(os.getpid())],
+        universal_newlines=True,
+    )
+    return int(output.strip())
+
+
+def log_memory_usage(
+    last_logged_at: float,
+    tracked_state_count: int,
+    log_path: str = DEBUG_LOG_PATH,
+    current_time: Optional[float] = None,
+) -> float:
+    """Write a periodic memory usage sample to the debug log."""
+    current_time = time.monotonic() if current_time is None else current_time
+    if current_time - last_logged_at < MEMORY_LOG_INTERVAL_SECONDS:
+        return last_logged_at
+    try:
+        append_debug_log(
+            '[{}] rss_kb={} tracked_states={}'.format(
+                current_timestamp(),
+                get_memory_usage_kb(),
+                tracked_state_count,
+            ),
+            log_path,
+        )
+    except Exception:
+        append_debug_log(
+            '[{}] memory_log_failed {}'.format(
+                current_timestamp(),
+                traceback.format_exc().rstrip().replace('\n', ' | '),
+            ),
+            log_path,
+        )
+    return current_time
+
+
+def log_unhandled_exception(log_path: str = DEBUG_LOG_PATH) -> None:
+    """Write the active exception traceback to the debug log."""
+    append_debug_log(
+        '[{}] unhandled_exception\n{}'.format(
+            current_timestamp(),
+            traceback.format_exc().rstrip(),
+        ),
+        log_path,
+    )
 
 # Assuming grids are rectangular
 def state_transition(
@@ -338,8 +407,20 @@ def run_game(stdscr: curses.window) -> None:
         color_pair = configure_colors(foreground_color, background_color)
         configure_input(stdscr, refresh_time)
         current_grid, future_grid = grid_1, grid_2
-        seen_states = set()
-        record_state(seen_states, current_grid)
+        recent_states: Deque[StateSignature] = deque(maxlen=MAX_TRACKED_STATES)
+        record_state(recent_states, current_grid)
+        last_memory_log_at = 0.0
+
+        append_debug_log(
+            '[{}] session_start pid={} rows={} cols={} refresh_time={}'.format(
+                current_timestamp(),
+                os.getpid(),
+                len(current_grid),
+                len(current_grid[0]),
+                refresh_time,
+            ),
+        )
+        last_memory_log_at = log_memory_usage(last_memory_log_at, len(recent_states))
 
         stdscr.addstr(0, 0, print_grid(current_grid), color_pair)
         stdscr.refresh()
@@ -348,20 +429,24 @@ def run_game(stdscr: curses.window) -> None:
             if should_exit(stdscr.getch()):
                 break
             state_transition(current_grid, future_grid)
-            if is_repeated_state(seen_states, future_grid):
+            if is_repeated_state(recent_states, future_grid):
                 current_grid, future_grid = restart_grids(
                     len(current_grid),
                     len(current_grid[0]),
                 )
-                seen_states = set()
-                record_state(seen_states, current_grid)
+                recent_states = deque(maxlen=MAX_TRACKED_STATES)
+                record_state(recent_states, current_grid)
             else:
-                record_state(seen_states, future_grid)
+                record_state(recent_states, future_grid)
                 current_grid, future_grid = future_grid, current_grid
+            last_memory_log_at = log_memory_usage(last_memory_log_at, len(recent_states))
             stdscr.addstr(0, 0, print_grid(current_grid), color_pair)
             stdscr.refresh()
     except KeyboardInterrupt:
         pass
+    except Exception:
+        log_unhandled_exception()
+        raise
 
 if __name__ == '__main__':
     wrapper(run_game)

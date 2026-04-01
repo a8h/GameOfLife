@@ -1,5 +1,7 @@
 import sys
+import tempfile
 import unittest
+from collections import deque
 from unittest import mock
 
 import game
@@ -57,22 +59,32 @@ class GameTests(unittest.TestCase):
             [1, 1, 1],
             [0, 0, 0],
         ]
-        seen_states = {game.grid_signature(first_state)}
+        recent_states = deque([game.grid_signature(first_state)], maxlen=game.MAX_TRACKED_STATES)
 
-        self.assertTrue(game.is_repeated_state(seen_states, first_state))
-        self.assertFalse(game.is_repeated_state(seen_states, second_state))
+        self.assertTrue(game.is_repeated_state(recent_states, first_state))
+        self.assertFalse(game.is_repeated_state(recent_states, second_state))
 
-    def test_record_state_adds_signature_to_seen_states(self):
+    def test_record_state_adds_signature_to_recent_states(self):
         state = [
             [0, 1, 0],
             [0, 1, 0],
             [0, 1, 0],
         ]
-        seen_states = set()
+        recent_states = deque(maxlen=game.MAX_TRACKED_STATES)
 
-        game.record_state(seen_states, state)
+        game.record_state(recent_states, state)
 
-        self.assertEqual({game.grid_signature(state)}, seen_states)
+        self.assertEqual([game.grid_signature(state)], list(recent_states))
+
+    def test_record_state_evicts_states_older_than_limit(self):
+        recent_states = deque(maxlen=game.MAX_TRACKED_STATES)
+
+        for index in range(game.MAX_TRACKED_STATES + 1):
+            game.record_state(recent_states, [[index]])
+
+        self.assertEqual(game.MAX_TRACKED_STATES, len(recent_states))
+        self.assertEqual(game.grid_signature([[1]]), recent_states[0])
+        self.assertEqual(game.grid_signature([[game.MAX_TRACKED_STATES]]), recent_states[-1])
 
     def test_restart_grids_pauses_before_creating_new_grids(self):
         new_grids = ([[1, 0]], [[0, 0]])
@@ -84,6 +96,64 @@ class GameTests(unittest.TestCase):
         sleep.assert_called_once_with(game.RESTART_DELAY_SECONDS)
         make_grids.assert_called_once_with(1, 2)
         self.assertEqual(new_grids, restarted_grids)
+
+    def test_get_memory_usage_kb_parses_ps_output(self):
+        with mock.patch.object(game.subprocess, 'check_output', return_value=' 1234\n') as check_output:
+            memory_usage_kb = game.get_memory_usage_kb()
+
+        check_output.assert_called_once_with(
+            ['ps', '-o', 'rss=', '-p', str(game.os.getpid())],
+            universal_newlines=True,
+        )
+        self.assertEqual(1234, memory_usage_kb)
+
+    def test_log_memory_usage_writes_sample_after_interval(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_path = temp_dir + '/game_debug.log'
+            with mock.patch.object(game, 'get_memory_usage_kb', return_value=2048):
+                with mock.patch.object(game, 'current_timestamp', return_value='2026-04-01T00:00:00'):
+                    last_logged_at = game.log_memory_usage(
+                        0.0,
+                        3,
+                        log_path=log_path,
+                        current_time=game.MEMORY_LOG_INTERVAL_SECONDS,
+                    )
+
+            with open(log_path) as debug_log:
+                log_contents = debug_log.read()
+
+        self.assertEqual(game.MEMORY_LOG_INTERVAL_SECONDS, last_logged_at)
+        self.assertIn('rss_kb=2048', log_contents)
+        self.assertIn('tracked_states=3', log_contents)
+
+    def test_log_memory_usage_skips_before_interval(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_path = temp_dir + '/game_debug.log'
+            with mock.patch.object(game, 'get_memory_usage_kb') as get_memory_usage_kb:
+                last_logged_at = game.log_memory_usage(
+                    0.0,
+                    3,
+                    log_path=log_path,
+                    current_time=game.MEMORY_LOG_INTERVAL_SECONDS - 0.1,
+                )
+
+        get_memory_usage_kb.assert_not_called()
+        self.assertEqual(0.0, last_logged_at)
+
+    def test_log_unhandled_exception_writes_traceback(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_path = temp_dir + '/game_debug.log'
+            try:
+                raise RuntimeError('boom')
+            except RuntimeError:
+                with mock.patch.object(game, 'current_timestamp', return_value='2026-04-01T00:00:00'):
+                    game.log_unhandled_exception(log_path=log_path)
+
+            with open(log_path) as debug_log:
+                log_contents = debug_log.read()
+
+        self.assertIn('unhandled_exception', log_contents)
+        self.assertIn('RuntimeError: boom', log_contents)
 
     def test_parse_color_normalizes_case(self):
         self.assertEqual('green', game.parse_color('Green'))
