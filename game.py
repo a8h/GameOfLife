@@ -19,6 +19,7 @@ locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
 
 ESC_KEY = 27
+ESC_DELAY_MS = 1
 EXIT_KEYS = (ord('q'), ord('Q'), ESC_KEY)
 
 
@@ -206,6 +207,12 @@ def should_exit(key_pressed: int) -> bool:
     """Return whether the pressed key should exit the game."""
     return key_pressed in EXIT_KEYS
 
+
+def configure_input(stdscr: curses.window, refresh_time: float) -> None:
+    """Configure keyboard input timing for the game loop."""
+    curses.set_escdelay(ESC_DELAY_MS)
+    stdscr.timeout(int(refresh_time * 1000))
+
 def run_game(stdscr: curses.window) -> None:
     """ Runs the main game loop.
 
@@ -221,7 +228,7 @@ def run_game(stdscr: curses.window) -> None:
         grid_1, grid_2, steps, refresh_time = init_game(stdscr)
         curses.curs_set(0)
         curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        stdscr.timeout(int(refresh_time * 1000))
+        configure_input(stdscr, refresh_time)
         stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
         stdscr.refresh()
 

@@ -9,6 +9,9 @@ class DummyScreen(object):
     def getmaxyx(self):
         return (24, 80)
 
+    def timeout(self, value):
+        self.timeout_value = value
+
 
 class GameTests(unittest.TestCase):
     def test_rand_init_grid_returns_requested_shape(self):
@@ -41,6 +44,15 @@ class GameTests(unittest.TestCase):
         self.assertTrue(game.should_exit(ord('Q')))
         self.assertTrue(game.should_exit(27))
         self.assertFalse(game.should_exit(-1))
+
+    def test_configure_input_reduces_escape_delay(self):
+        screen = DummyScreen()
+
+        with mock.patch.object(game.curses, 'set_escdelay') as set_escdelay:
+            game.configure_input(screen, 0.04)
+
+        set_escdelay.assert_called_once_with(game.ESC_DELAY_MS)
+        self.assertEqual(40, screen.timeout_value)
 
     def test_live_neighbor_count_counts_wrapped_neighbors(self):
         grid = [
