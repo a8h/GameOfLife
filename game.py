@@ -21,6 +21,18 @@ locale.getpreferredencoding()
 ESC_KEY = 27
 ESC_DELAY_MS = 1
 EXIT_KEYS = (ord('q'), ord('Q'), ESC_KEY)
+DEFAULT_FOREGROUND_COLOR = 'green'
+DEFAULT_BACKGROUND_COLOR = 'black'
+COLOR_NAME_TO_CURSES = {
+    'black': curses.COLOR_BLACK,
+    'blue': curses.COLOR_BLUE,
+    'cyan': curses.COLOR_CYAN,
+    'green': curses.COLOR_GREEN,
+    'magenta': curses.COLOR_MAGENTA,
+    'red': curses.COLOR_RED,
+    'white': curses.COLOR_WHITE,
+    'yellow': curses.COLOR_YELLOW,
+}
 
 
 def rand_init_grid(
@@ -173,7 +185,9 @@ def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> in
 
     return count
 
-def init_game(stdscr: curses.window) -> tuple[list[list[int]], list[list[int]], int, float]:
+def init_game(
+    stdscr: curses.window,
+) -> tuple[list[list[int]], list[list[int]], int, float, str, str]:
     """ Initialize the game and values for ncurses.
 
     Args:
@@ -187,6 +201,8 @@ def init_game(stdscr: curses.window) -> tuple[list[list[int]], list[list[int]], 
     cols /= 2
     steps = sys.maxsize
     refresh_time = 0.04
+    foreground_color = DEFAULT_FOREGROUND_COLOR
+    background_color = DEFAULT_BACKGROUND_COLOR
 
     if len(sys.argv) > 1:
         rows = int(sys.argv[1])
@@ -196,11 +212,41 @@ def init_game(stdscr: curses.window) -> tuple[list[list[int]], list[list[int]], 
         steps = int(sys.argv[3])
     if len(sys.argv) > 4:
         refresh_time = float(sys.argv[4])
+    if len(sys.argv) > 5:
+        foreground_color = parse_color(sys.argv[5])
+    if len(sys.argv) > 6:
+        background_color = parse_color(sys.argv[6])
 
     rows, cols = int(rows), int(cols)
     grid_1 = rand_init_grid(rows, cols)
     grid_2 = [[0 for _ in xrange(cols)] for _ in xrange(rows)]
-    return (grid_1, grid_2, steps, refresh_time)
+    return (
+        grid_1,
+        grid_2,
+        steps,
+        refresh_time,
+        foreground_color,
+        background_color,
+    )
+
+
+def parse_color(color_name: str) -> str:
+    """Normalize and validate a terminal color name."""
+    normalized_color = color_name.lower()
+    if normalized_color not in COLOR_NAME_TO_CURSES:
+        raise ValueError('Unsupported color: {}'.format(color_name))
+    return normalized_color
+
+
+def configure_colors(foreground_color: str, background_color: str) -> int:
+    """Initialize curses colors and return the pair used for rendering."""
+    curses.start_color()
+    curses.init_pair(
+        1,
+        COLOR_NAME_TO_CURSES[foreground_color],
+        COLOR_NAME_TO_CURSES[background_color],
+    )
+    return curses.color_pair(1)
 
 
 def should_exit(key_pressed: int) -> bool:
@@ -225,11 +271,18 @@ def run_game(stdscr: curses.window) -> None:
     """
     try:
         stdscr.clear()
-        grid_1, grid_2, steps, refresh_time = init_game(stdscr)
+        (
+            grid_1,
+            grid_2,
+            steps,
+            refresh_time,
+            foreground_color,
+            background_color,
+        ) = init_game(stdscr)
         curses.curs_set(0)
-        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        color_pair = configure_colors(foreground_color, background_color)
         configure_input(stdscr, refresh_time)
-        stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
+        stdscr.addstr(0, 0, print_grid(grid_1), color_pair)
         stdscr.refresh()
 
         for step in xrange(steps):
@@ -237,10 +290,10 @@ def run_game(stdscr: curses.window) -> None:
                 break
             if step % 2:
                 state_transition(grid_2, grid_1)
-                stdscr.addstr(0, 0, print_grid(grid_1), curses.color_pair(1))
+                stdscr.addstr(0, 0, print_grid(grid_1), color_pair)
             else:
                 state_transition(grid_1, grid_2)
-                stdscr.addstr(0, 0, print_grid(grid_2), curses.color_pair(1))
+                stdscr.addstr(0, 0, print_grid(grid_2), color_pair)
             stdscr.refresh()
     except KeyboardInterrupt:
         pass

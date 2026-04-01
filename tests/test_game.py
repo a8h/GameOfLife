@@ -34,6 +34,13 @@ class GameTests(unittest.TestCase):
         self.assertEqual(2, len(grid))
         self.assertEqual(3, len(grid[0]))
 
+    def test_parse_color_normalizes_case(self):
+        self.assertEqual('green', game.parse_color('Green'))
+
+    def test_parse_color_rejects_unknown_color(self):
+        with self.assertRaises(ValueError):
+            game.parse_color('orange')
+
     def test_print_grid_returns_expected_bytes(self):
         rendered = game.print_grid([[1, 0], [0, 1]])
 
@@ -53,6 +60,20 @@ class GameTests(unittest.TestCase):
 
         set_escdelay.assert_called_once_with(game.ESC_DELAY_MS)
         self.assertEqual(40, screen.timeout_value)
+
+    def test_configure_colors_initializes_requested_pair(self):
+        with mock.patch.object(game.curses, 'start_color') as start_color:
+            with mock.patch.object(game.curses, 'init_pair') as init_pair:
+                with mock.patch.object(game.curses, 'color_pair', return_value=123):
+                    color_pair = game.configure_colors('red', 'black')
+
+        start_color.assert_called_once_with()
+        init_pair.assert_called_once_with(
+            1,
+            game.COLOR_NAME_TO_CURSES['red'],
+            game.COLOR_NAME_TO_CURSES['black'],
+        )
+        self.assertEqual(123, color_pair)
 
     def test_live_neighbor_count_counts_wrapped_neighbors(self):
         grid = [
@@ -102,7 +123,14 @@ class GameTests(unittest.TestCase):
 
     def test_init_game_honors_partial_cli_arguments(self):
         with mock.patch.object(sys, 'argv', ['game.py', '10', '20']):
-            grid_1, grid_2, steps, refresh_time = game.init_game(DummyScreen())
+            (
+                grid_1,
+                grid_2,
+                steps,
+                refresh_time,
+                foreground_color,
+                background_color,
+            ) = game.init_game(DummyScreen())
 
         self.assertEqual(10, len(grid_1))
         self.assertEqual(20, len(grid_1[0]))
@@ -110,6 +138,32 @@ class GameTests(unittest.TestCase):
         self.assertEqual(20, len(grid_2[0]))
         self.assertEqual(sys.maxsize, steps)
         self.assertEqual(0.04, refresh_time)
+        self.assertEqual(game.DEFAULT_FOREGROUND_COLOR, foreground_color)
+        self.assertEqual(game.DEFAULT_BACKGROUND_COLOR, background_color)
+
+    def test_init_game_accepts_optional_color_arguments(self):
+        with mock.patch.object(
+            sys,
+            'argv',
+            ['game.py', '10', '20', '30', '0.1', 'red', 'black'],
+        ):
+            (
+                grid_1,
+                grid_2,
+                steps,
+                refresh_time,
+                foreground_color,
+                background_color,
+            ) = game.init_game(DummyScreen())
+
+        self.assertEqual(10, len(grid_1))
+        self.assertEqual(20, len(grid_1[0]))
+        self.assertEqual(10, len(grid_2))
+        self.assertEqual(20, len(grid_2[0]))
+        self.assertEqual(30, steps)
+        self.assertEqual(0.1, refresh_time)
+        self.assertEqual('red', foreground_color)
+        self.assertEqual('black', background_color)
 
     def test_state_transition_preserves_dead_border(self):
         current = [

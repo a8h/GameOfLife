@@ -19,6 +19,12 @@ Create a 24 x 40 block grid on your terminal, and run for 1000 ticks with a paus
 
 `$ python game.py 24 40 1000 0.04`
 
+Create a 24 x 40 block grid with red live cells on a black background:
+
+`$ python game.py 24 40 1000 0.04 red black`
+
+Supported colors: `black`, `blue`, `cyan`, `green`, `magenta`, `red`, `white`, `yellow`
+
 Exit the Game of Life visualization by pressing `Ctrl-C`, `q`, `Q`, or `Esc`.
 
 ## Tests
