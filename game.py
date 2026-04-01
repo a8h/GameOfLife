@@ -5,16 +5,15 @@ https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules
 
 import random
 import sys
-import time
 import curses
 from curses import wrapper
 import locale
 from typing import Union
 
 try:
-    xrange
+    range_compat = xrange
 except NameError:
-    xrange = range
+    range_compat = range
 
 locale.setlocale(locale.LC_ALL, '')
 locale.getpreferredencoding()
@@ -54,10 +53,12 @@ def rand_init_grid(
     """
     num_rows, num_cols = int(num_rows), int(num_cols)
     if with_border:
-        return [[random.randint(0, 1) if i > 0 and i < num_cols - 1 else 0 \
-            for i in xrange(num_cols)] if i > 0 and i < num_rows - 1 \
-            else [0] * num_cols for i in xrange(num_rows)]
-    return [[random.randint(0, 1) for i in xrange(num_cols)] for i in xrange(num_rows)]
+        return [[
+            random.randint(0, 1) if col_index > 0 and col_index < num_cols - 1 else 0
+            for col_index in range_compat(num_cols)
+        ] if row_index > 0 and row_index < num_rows - 1 else [0] * num_cols
+            for row_index in range_compat(num_rows)]
+    return [[random.randint(0, 1) for _ in range_compat(num_cols)] for _ in range_compat(num_rows)]
 
 def print_grid(
     grid: list[list[int]], symbol_live: str = u'\u2584', symbol_dead: str = ' '
@@ -73,8 +74,10 @@ def print_grid(
         bytes: A string of bytes representing the grid.
 
     """
-    return b'\n'.join([b' '.join([symbol_live.encode('UTF-8') if i \
-            else symbol_dead.encode('UTF-8') for i in arr]) for arr in grid])
+    return b'\n'.join([b' '.join([
+        symbol_live.encode('UTF-8') if cell else symbol_dead.encode('UTF-8')
+        for cell in row
+    ]) for row in grid])
 
 # Assuming grids are rectangular
 def state_transition(
@@ -100,15 +103,15 @@ def state_transition(
     col_end = len(current_grid[0]) - 1 if with_border else len(current_grid[0])
 
     if with_border:
-        for row_num in xrange(len(current_grid)):
+        for row_num in range_compat(len(current_grid)):
             future_grid[row_num][0] = 0
             future_grid[row_num][-1] = 0
-        for col_num in xrange(len(current_grid[0])):
+        for col_num in range_compat(len(current_grid[0])):
             future_grid[0][col_num] = 0
             future_grid[-1][col_num] = 0
 
-    for row_num in xrange(row_start, row_end):
-        for col_num in xrange(col_start, col_end):
+    for row_num in range_compat(row_start, row_end):
+        for col_num in range_compat(col_start, col_end):
             future_grid[row_num][col_num] = cell_transition(row_num, col_num, current_grid)
 
 def cell_transition(row_num: int, col_num: int, grid: list[list[int]]) -> int:
@@ -222,7 +225,7 @@ def init_game(
 
     rows, cols = int(rows), int(cols)
     grid_1 = rand_init_grid(rows, cols)
-    grid_2 = [[0 for _ in xrange(cols)] for _ in xrange(rows)]
+    grid_2 = [[0 for _ in range_compat(cols)] for _ in range_compat(rows)]
     return (
         grid_1,
         grid_2,
@@ -305,7 +308,7 @@ def run_game(stdscr: curses.window) -> None:
         stdscr.addstr(0, 0, print_grid(grid_1), color_pair)
         stdscr.refresh()
 
-        for step in xrange(steps):
+        for step in range_compat(steps):
             if should_exit(stdscr.getch()):
                 break
             if step % 2:
