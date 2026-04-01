@@ -27,6 +27,14 @@ Create a 24 x 40 block grid with 256-color palette values:
 
 `$ python game.py 24 40 1000 0.04 196 234`
 
+Named options let you skip `steps` while still setting later arguments:
+
+`$ python3 game.py 24 40 --delay 0.04 --fg 111 --bg 11`
+
+You can also use named options for any of the positional values:
+
+`$ python3 game.py --rows 24 --cols 40 --steps 1000 --delay 0.04 --fg red --bg black`
+
 Supported colors: named colors `black`, `blue`, `cyan`, `green`, `magenta`, `red`, `white`, `yellow`, or palette indices `0`-`255` on terminals with 256-color support
 
 If the simulation falls into a repeating cycle, it pauses for a second and then restarts with a fresh random grid.

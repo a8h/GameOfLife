@@ -285,6 +285,38 @@ class GameTests(unittest.TestCase):
         self.assertEqual(game.DEFAULT_FOREGROUND_COLOR, foreground_color)
         self.assertEqual(game.DEFAULT_BACKGROUND_COLOR, background_color)
 
+    def test_parse_cli_arguments_uses_terminal_defaults(self):
+        parsed_arguments = game.parse_cli_arguments(24, 40, argv=[])
+
+        self.assertEqual(
+            (24, 40, sys.maxsize, 0.04, game.DEFAULT_FOREGROUND_COLOR, game.DEFAULT_BACKGROUND_COLOR),
+            parsed_arguments,
+        )
+
+    def test_parse_cli_arguments_accepts_named_options_without_steps(self):
+        parsed_arguments = game.parse_cli_arguments(
+            24,
+            40,
+            argv=['24', '40', '--delay', '0.1', '--fg', 'red', '--bg', 'black'],
+        )
+
+        self.assertEqual(
+            (24, 40, sys.maxsize, 0.1, 'red', 'black'),
+            parsed_arguments,
+        )
+
+    def test_parse_cli_arguments_allows_named_options_to_override_positionals(self):
+        parsed_arguments = game.parse_cli_arguments(
+            24,
+            40,
+            argv=['10', '20', '30', '0.1', 'red', 'black', '--steps', '50', '--delay', '0.2'],
+        )
+
+        self.assertEqual(
+            (10, 20, 50, 0.2, 'red', 'black'),
+            parsed_arguments,
+        )
+
     def test_init_game_accepts_optional_color_arguments(self):
         with mock.patch.object(
             sys,
@@ -329,6 +361,30 @@ class GameTests(unittest.TestCase):
         self.assertEqual(10, len(grid_2))
         self.assertEqual(20, len(grid_2[0]))
         self.assertEqual(30, steps)
+        self.assertEqual(0.1, refresh_time)
+        self.assertEqual(196, foreground_color)
+        self.assertEqual(234, background_color)
+
+    def test_init_game_accepts_named_delay_and_color_arguments_without_steps(self):
+        with mock.patch.object(
+            sys,
+            'argv',
+            ['game.py', '10', '20', '--delay', '0.1', '--fg', '196', '--bg', '234'],
+        ):
+            (
+                grid_1,
+                grid_2,
+                steps,
+                refresh_time,
+                foreground_color,
+                background_color,
+            ) = game.init_game(DummyScreen())
+
+        self.assertEqual(10, len(grid_1))
+        self.assertEqual(20, len(grid_1[0]))
+        self.assertEqual(10, len(grid_2))
+        self.assertEqual(20, len(grid_2[0]))
+        self.assertEqual(sys.maxsize, steps)
         self.assertEqual(0.1, refresh_time)
         self.assertEqual(196, foreground_color)
         self.assertEqual(234, background_color)

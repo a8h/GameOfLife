@@ -6,6 +6,7 @@ https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules
 import random
 import sys
 import time
+import argparse
 import curses
 import os
 import subprocess
@@ -306,32 +307,74 @@ def init_game(
 
     """
     rows, cols = stdscr.getmaxyx()
-    cols /= 2
-    steps = sys.maxsize
-    refresh_time = 0.04
-    foreground_color = DEFAULT_FOREGROUND_COLOR
-    background_color = DEFAULT_BACKGROUND_COLOR
-
-    if len(sys.argv) > 1:
-        rows = int(sys.argv[1])
-    if len(sys.argv) > 2:
-        cols = int(sys.argv[2])
-    if len(sys.argv) > 3:
-        steps = int(sys.argv[3])
-    if len(sys.argv) > 4:
-        refresh_time = float(sys.argv[4])
-    if len(sys.argv) > 5:
-        foreground_color = parse_color(sys.argv[5])
-    if len(sys.argv) > 6:
-        background_color = parse_color(sys.argv[6])
-
-    rows, cols = int(rows), int(cols)
+    rows, cols, steps, refresh_time, foreground_color, background_color = parse_cli_arguments(
+        int(rows),
+        int(cols / 2),
+    )
     grid_1, grid_2 = make_grids(rows, cols)
     return (
         grid_1,
         grid_2,
         steps,
         refresh_time,
+        foreground_color,
+        background_color,
+    )
+
+
+def choose_argument(
+    positional_value: Optional[ColorValue],
+    option_value: Optional[ColorValue],
+    default_value: ColorValue,
+) -> ColorValue:
+    """Prefer a named option, then a positional argument, then the default."""
+    if option_value is not None:
+        return option_value
+    if positional_value is not None:
+        return positional_value
+    return default_value
+
+
+def parse_cli_arguments(
+    default_rows: int,
+    default_cols: int,
+    argv: Optional[list[str]] = None,
+) -> tuple[int, int, int, float, ColorValue, ColorValue]:
+    """Parse positional and named CLI arguments for the game."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('rows', nargs='?', type=int)
+    parser.add_argument('cols', nargs='?', type=int)
+    parser.add_argument('steps', nargs='?', type=int)
+    parser.add_argument('delay', nargs='?', type=float)
+    parser.add_argument('foreground_color', nargs='?', type=parse_color)
+    parser.add_argument('background_color', nargs='?', type=parse_color)
+    parser.add_argument('--rows', dest='rows_option', type=int)
+    parser.add_argument('--cols', dest='cols_option', type=int)
+    parser.add_argument('--steps', dest='steps_option', type=int)
+    parser.add_argument('--delay', dest='delay_option', type=float)
+    parser.add_argument('--fg', dest='foreground_color_option', type=parse_color)
+    parser.add_argument('--bg', dest='background_color_option', type=parse_color)
+
+    parsed_arguments = parser.parse_args(sys.argv[1:] if argv is None else argv)
+    rows = choose_argument(parsed_arguments.rows, parsed_arguments.rows_option, default_rows)
+    cols = choose_argument(parsed_arguments.cols, parsed_arguments.cols_option, default_cols)
+    steps = choose_argument(parsed_arguments.steps, parsed_arguments.steps_option, sys.maxsize)
+    refresh_time = choose_argument(parsed_arguments.delay, parsed_arguments.delay_option, 0.04)
+    foreground_color = choose_argument(
+        parsed_arguments.foreground_color,
+        parsed_arguments.foreground_color_option,
+        DEFAULT_FOREGROUND_COLOR,
+    )
+    background_color = choose_argument(
+        parsed_arguments.background_color,
+        parsed_arguments.background_color_option,
+        DEFAULT_BACKGROUND_COLOR,
+    )
+    return (
+        int(rows),
+        int(cols),
+        int(steps),
+        float(refresh_time),
         foreground_color,
         background_color,
     )
