@@ -36,5 +36,3 @@ Run the automated test suite with:
 1. Restart if caught in a repetitive cycle
 2. Optimize performance
 3. Use 255 colors
-4. Allow user to specify which colors to use
-5. Allow other ways to exit the program
