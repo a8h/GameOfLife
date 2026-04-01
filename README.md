@@ -48,6 +48,5 @@ Run the automated test suite with:
 
 ## TODO
 1. Optimize performance
-2. Handle crashes after a while
-3. Use a gif instead of a PNG for the example demonstration
-4. Estimate memory usage tracking repeats
+2. Use a ASCIICINEMA gif instead of a PNG for the example demonstration
+3. Add pylint
