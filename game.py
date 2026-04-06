@@ -262,37 +262,18 @@ def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> in
         int: Number of neighboring cells that are alive.
 
     """
-    count = 0
     wrap_vertical, wrap_horizontal = len(grid), len(grid[0])
+    top_row = grid[(row_num - 1) % wrap_vertical]
+    middle_row = grid[row_num % wrap_vertical]
+    bottom_row = grid[(row_num + 1) % wrap_vertical]
+    left_col = (col_num - 1) % wrap_horizontal
+    right_col = (col_num + 1) % wrap_horizontal
 
-    # Top left
-    if grid[(row_num - 1) % wrap_vertical][(col_num - 1) % wrap_horizontal]:
-        count += 1
-    # Top middle
-    if grid[(row_num - 1) % wrap_vertical][col_num]:
-        count += 1
-    # Top right
-    if grid[(row_num - 1) % wrap_vertical][(col_num + 1) % wrap_horizontal]:
-        count += 1
-
-    # Bottom right
-    if grid[(row_num + 1) % wrap_vertical][(col_num - 1) % wrap_horizontal]:
-        count += 1
-    # Bottom middle
-    if grid[(row_num + 1) % wrap_vertical][col_num]:
-        count += 1
-    # Bottom right
-    if grid[(row_num + 1) % wrap_vertical][(col_num + 1) % wrap_horizontal]:
-        count += 1
-
-    # Middle left
-    if grid[row_num % wrap_vertical][(col_num - 1) % wrap_horizontal]:
-        count += 1
-    # Middle right
-    if grid[row_num % wrap_vertical][(col_num + 1) % wrap_horizontal]:
-        count += 1
-
-    return count
+    return (
+        top_row[left_col] + top_row[col_num] + top_row[right_col]
+        + middle_row[left_col] + middle_row[right_col]
+        + bottom_row[left_col] + bottom_row[col_num] + bottom_row[right_col]
+    )
 
 def init_game(
     stdscr: curses.window,
