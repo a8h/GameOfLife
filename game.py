@@ -232,22 +232,13 @@ def cell_transition(row_num: int, col_num: int, grid: list[list[int]]) -> int:
     live_count = live_neighbor_count(row_num, col_num, grid)
     living_status = grid[row_num][col_num]
 
-    # Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-    if living_status and live_count < 2:
-        return 0
-
-    # Any live cell with two or three live neighbours lives on to the next generation.
-    elif living_status and live_count == 2 or live_count == 3:
+    # Any cell with exactly three neighbors becomes alive.
+    if live_count == 3:
         return 1
-
-    # Any live cell with more than three live neighbours dies, as if by overpopulation.
-    elif living_status and live_count > 3:
-        return 0
-
-    # Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-    elif not living_status and live_count == 3:
-        return 1
-    return living_status
+    # Any cell with exactly two neighbors keeps its current state.
+    if live_count == 2:
+        return living_status
+    return 0
 
 # Naive way
 def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> int:
