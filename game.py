@@ -205,45 +205,32 @@ def state_transition(
         None
 
     """
+    row_count = len(current_grid)
+    col_count = len(current_grid[0])
     row_start = 1 if with_border else 0
-    row_end = len(current_grid) - 1 if with_border else len(current_grid)
+    row_end = row_count - 1 if with_border else row_count
     col_start = 1 if with_border else 0
-    col_end = len(current_grid[0]) - 1 if with_border else len(current_grid[0])
+    col_end = col_count - 1 if with_border else col_count
 
     if with_border:
-        for row_num in range_compat(len(current_grid)):
+        for row_num in range_compat(row_count):
             future_grid[row_num][0] = 0
             future_grid[row_num][-1] = 0
-        for col_num in range_compat(len(current_grid[0])):
+        for col_num in range_compat(col_count):
             future_grid[0][col_num] = 0
             future_grid[-1][col_num] = 0
 
     for row_num in range_compat(row_start, row_end):
+        future_row = future_grid[row_num]
+        current_row = current_grid[row_num]
         for col_num in range_compat(col_start, col_end):
-            future_grid[row_num][col_num] = cell_transition(row_num, col_num, current_grid)
-
-def cell_transition(row_num: int, col_num: int, grid: list[list[int]]) -> int:
-    """ Uses Conway's rules to determine whether a cell should live (1) or die (0).
-
-    Args:
-        row_num (int): The row position of the cell.
-        col_num (int): The column position of the cell.
-        grid (list): A 2-d grid represented by a list of lists.
-
-    Returns:
-        int: 1 for alive. 0 for dead.
-
-    """
-    live_count = live_neighbor_count(row_num, col_num, grid)
-    living_status = grid[row_num][col_num]
-
-    # Any cell with exactly three neighbors becomes alive.
-    if live_count == 3:
-        return 1
-    # Any cell with exactly two neighbors keeps its current state.
-    if live_count == 2:
-        return living_status
-    return 0
+            live_count = live_neighbor_count(row_num, col_num, current_grid)
+            if live_count == 3:
+                future_row[col_num] = 1
+            elif live_count == 2:
+                future_row[col_num] = current_row[col_num]
+            else:
+                future_row[col_num] = 0
 
 # Naive way
 def live_neighbor_count(row_num: int, col_num: int, grid: list[list[int]]) -> int:

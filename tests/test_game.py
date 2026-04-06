@@ -229,41 +229,53 @@ class GameTests(unittest.TestCase):
         self.assertEqual(1, game.live_neighbor_count(1, 1, grid))
         self.assertEqual(1, game.live_neighbor_count(0, 0, grid))
 
-    def test_cell_transition_applies_underpopulation(self):
+    def test_state_transition_applies_underpopulation(self):
         grid = [
             [0, 0, 0],
             [0, 1, 0],
             [0, 0, 0],
         ]
+        future = [[9] * 3 for _ in range(3)]
 
-        self.assertEqual(0, game.cell_transition(1, 1, grid))
+        game.state_transition(grid, future)
 
-    def test_cell_transition_applies_survival(self):
+        self.assertEqual(0, future[1][1])
+
+    def test_state_transition_applies_survival(self):
         grid = [
             [1, 1, 0],
             [0, 1, 0],
             [0, 0, 0],
         ]
+        future = [[9] * 3 for _ in range(3)]
 
-        self.assertEqual(1, game.cell_transition(1, 1, grid))
+        game.state_transition(grid, future)
 
-    def test_cell_transition_applies_overpopulation(self):
+        self.assertEqual(1, future[1][1])
+
+    def test_state_transition_applies_overpopulation(self):
         grid = [
             [1, 1, 1],
             [1, 1, 0],
             [0, 0, 0],
         ]
+        future = [[9] * 3 for _ in range(3)]
 
-        self.assertEqual(0, game.cell_transition(1, 1, grid))
+        game.state_transition(grid, future)
 
-    def test_cell_transition_applies_reproduction(self):
+        self.assertEqual(0, future[1][1])
+
+    def test_state_transition_applies_reproduction(self):
         grid = [
             [1, 1, 0],
             [1, 0, 0],
             [0, 0, 0],
         ]
+        future = [[9] * 3 for _ in range(3)]
 
-        self.assertEqual(1, game.cell_transition(1, 1, grid))
+        game.state_transition(grid, future)
+
+        self.assertEqual(1, future[1][1])
 
     def test_init_game_honors_partial_cli_arguments(self):
         with mock.patch.object(sys, 'argv', ['game.py', '10', '20']):
