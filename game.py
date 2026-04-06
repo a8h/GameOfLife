@@ -85,10 +85,15 @@ def print_grid(
         bytes: A string of bytes representing the grid.
 
     """
-    return b'\n'.join([b' '.join([
-        symbol_live.encode('UTF-8') if cell else symbol_dead.encode('UTF-8')
-        for cell in row
-    ]) for row in grid])
+    symbol_live_bytes = symbol_live.encode('UTF-8')
+    symbol_dead_bytes = symbol_dead.encode('UTF-8')
+    return b'\n'.join([
+        b' '.join([
+            symbol_live_bytes if cell else symbol_dead_bytes
+            for cell in row
+        ])
+        for row in grid
+    ])
 
 
 def make_grids(num_rows: int, num_cols: int) -> tuple[list[list[int]], list[list[int]]]:
