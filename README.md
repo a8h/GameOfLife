@@ -58,3 +58,4 @@ Run pylint with:
 ## TODO
 1. Optimize performance
 2. Use a ASCIICINEMA gif instead of a PNG for the example demonstration
+3. Fix Pylint issues
