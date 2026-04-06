@@ -1,0 +1,6 @@
+[MAIN]
+ignore=__pycache__
+
+[MESSAGES CONTROL]
+disable=too-few-public-methods
+

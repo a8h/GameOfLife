@@ -1,1 +1,3 @@
 game_debug.log
+game_fatal.log
+.pylint.d/

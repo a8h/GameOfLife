@@ -46,7 +46,15 @@ Run the automated test suite with:
 
 `$ python3 -m unittest discover -s tests -p 'test*.py'`
 
+## Linting
+Install pylint with Homebrew:
+
+`$ brew install pylint`
+
+Run pylint with:
+
+`$ pylint game.py tests/test_game.py`
+
 ## TODO
 1. Optimize performance
 2. Use a ASCIICINEMA gif instead of a PNG for the example demonstration
-3. Add pylint
